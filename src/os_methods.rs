@@ -70,7 +70,7 @@ pub fn handle_yarn_installation() {
     }
 }
 
-pub fn read_dirs(path_buf: PathBuf) {
+pub fn check_if_dir_exists(path_buf: PathBuf, dir_name: &str) -> bool {
     let paths = fs::read_dir(path_buf.as_path()).unwrap();
 
     for path in paths {
@@ -78,11 +78,15 @@ pub fn read_dirs(path_buf: PathBuf) {
         let dir_name = path.file_name();
         let dir_path = path.metadata().unwrap();
 
-        if dir_path.is_dir() {
+        if dir_path.is_dir() && dir_name.to_str().unwrap() == dir_name {
             println!("Directory: {}", dir_name.to_string_lossy().to_string());
+            return true
         }
     }
+
+    return false
 }
+
 
 pub fn install_yarn() -> bool {
     let output = native_cmd_executor()

@@ -45,21 +45,22 @@ impl Default for NextApp {
 }
 
 impl NextApp {
-    fn app_name_check(app_name: String) -> Option<String> {
+    fn app_name_check(&mut self, app_name: String) -> Option<String> {
         if app_name == "\n" {
             let mut new_app_name = String::new();
             println!("{}", "Please name your Application:".bright_green());
             std::io::stdin().read_line(&mut new_app_name).unwrap();
 
             if new_app_name == "\n" {
-                Self::app_name_check(app_name.clone());
+                self.app_name_check(app_name.clone());
+            } else {
+                self.app_name = new_app_name;
             }
         }
         Some(app_name)
     }
-
+    
     fn build_project_info(&mut self) {
-        os_methods::read_dirs(self.dir.clone());
         let s = format!("{} {}", "Choose your preferred".bright_white(), "Package Manager:".bright_yellow());
         self.package_manager = Select::new(s.as_str(), self.package_managers.clone())
             .prompt()
@@ -131,7 +132,7 @@ impl NextApp {
         std::io::stdin().read_line(&mut new_app_name).unwrap();
 
         self.app_name = new_app_name;
-        Self::app_name_check(self.app_name.clone()).unwrap();
+        self.app_name_check(self.app_name.clone()).unwrap();
 
         if use_current_dir == "Yes" {
             self.dir = std::env::current_dir().unwrap()
@@ -149,9 +150,18 @@ impl NextApp {
         self.create();
     }
 
+    fn should_lint(&self) -> &str {
+        if self.use_eslint {
+            return "--eslint"
+        } else {
+            return "--no-eslint"
+        }
+    }
+
     fn build_with_ts(&self) {
+        let lint = self.should_lint();
         let use_pkg = format!("--use-{}", self.package_manager);
-        let next_app_args = format!("npx create-next-app@latest {} {} {}", self.app_name, use_pkg, String::from("--ts"));
+        let next_app_args = format!("npx create-next-app@latest {} {} {} {}", self.app_name, use_pkg, lint, String::from("--ts"));
 
         let output = os_methods::native_cmd_executor()
             .arg("-c")
@@ -163,8 +173,9 @@ impl NextApp {
     }
 
     fn build_with_js(&self) {
+        let lint = self.should_lint();
         let use_pkg = format!("--use-{}", self.package_manager);
-        let next_app_args = format!("npx create-next-app@latest {} {} {}", self.app_name.trim(), use_pkg, String::from("--js"));
+        let next_app_args = format!("npx create-next-app@latest {} {} {} {}", self.app_name.trim(), use_pkg, lint, String::from("--js"));
 
         let output = os_methods::native_cmd_executor()
             .arg("-c")
